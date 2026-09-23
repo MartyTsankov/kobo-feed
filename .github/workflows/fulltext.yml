@@ -1,0 +1,50 @@
+name: Add full text for KOReader
+
+on:
+  push:
+    branches: [main]
+    paths: [feed.xml, fulltext.py, .github/workflows/fulltext.yml]
+  workflow_dispatch:
+  schedule:
+    - cron: "17 * * * *"   # hourly retry for any links that failed
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fulltext
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install extractor
+        run: pip install "trafilatura==2.0.0" "requests>=2.32,<3"
+
+      - name: Build kobo.xml
+        run: python fulltext.py
+
+      - name: Commit if changed
+        run: |
+          git config user.name "kobo-feed bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add kobo.xml articles
+          if git diff --cached --quiet; then
+            echo "Nothing new."
+            exit 0
+          fi
+          git commit -m "Add full text"
+          # A send may have landed while this ran; it only touches feed.xml, so rebase is clean.
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push && exit 0
+            sleep 5
+          done
+          exit 1
