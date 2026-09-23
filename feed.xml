@@ -1,10 +1,16 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0">
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0">
 <channel>
 <title>Low Noise: To Read</title>
 <link>https://claude.ai/artifact/5v2H1mSXF712tzV6kdVmGb</link>
 <description>Articles sent from Low Noise to Kobo.</description>
-<lastBuildDate>Wed, 23 Sep 2026 00:07:02 +0000</lastBuildDate>
+<lastBuildDate>Wed, 23 Sep 2026 00:23:00 GMT</lastBuildDate>
+<item>
+<title>We Must Pace the Frontier</title>
+<link>https://darioamodei.com/post/we-must-pace-the-frontier</link>
+<guid isPermaLink="true">https://darioamodei.com/post/we-must-pace-the-frontier</guid>
+<pubDate>Wed, 23 Sep 2026 00:23:00 GMT</pubDate>
+<description>Dario Amodei · The document the whole month is arguing about. Amodei proposes three steps to slow how fast frontier capabilities grow: embedded outside evaluators (Anthropic has committed to this unilaterally), coordination among labs in democratic countries, and global coordination. OpenAI adopted step one today. Read the original before the commentary.</description>
+</item>
 <item>
 <title>Twelve Virtues of Rationality (pinned)</title>
 <link>https://www.yudkowsky.net/rational/virtues</link>
