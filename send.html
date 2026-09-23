@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Send to Kobo</title>
+<style>
+:root{--bg:#F3F4F7;--surface:#fff;--ink:#151A23;--muted:#5A6373;--rule:#DADEE6;--accent:#2F43C4;--accent-ink:#fff;--ok:#2D7A55;--bad:#B3261E;
+  --f-ui:"Avenir Next","Segoe UI",system-ui,-apple-system,sans-serif;--f-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#0E1116;--surface:#161A21;--ink:#E6E9EF;--muted:#9AA2B0;--rule:#272D37;--accent:#9DAAFF;--accent-ink:#0E1116;--ok:#6CC79A;--bad:#F2877F}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 var(--f-ui);padding:max(24px,env(safe-area-inset-top)) 18px 40px}
+main{max-width:520px;margin:0 auto}
+h1{font-size:22px;margin:0 0 4px;letter-spacing:-.01em}
+.sub{color:var(--muted);margin:0 0 22px;font-size:14.5px}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:12px;padding:18px}
+.status{font-size:18px;font-weight:600;margin:0 0 6px}
+.status.ok{color:var(--ok)} .status.bad{color:var(--bad)}
+.what{font-family:var(--f-mono);font-size:12.5px;color:var(--muted);word-break:break-all;margin:6px 0 0}
+label{display:block;font-size:13px;font-weight:600;margin:14px 0 6px}
+input{width:100%;font:15px var(--f-mono);padding:10px 12px;border:1px solid var(--rule);border-radius:8px;background:var(--bg);color:var(--ink)}
+button{margin-top:16px;font:600 15px var(--f-ui);padding:11px 16px;border:0;border-radius:8px;background:var(--accent);color:var(--accent-ink);cursor:pointer}
+button.quiet{background:transparent;color:var(--muted);border:1px solid var(--rule);font-weight:500}
+.help{font-size:13.5px;color:var(--muted);margin-top:10px}
+.help a{color:var(--accent)}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+</head>
+<body>
+<main>
+  <h1>Send to Kobo</h1>
+  <p class="sub">Adds a link to your KOReader feed. Sync KOReader in a few minutes to get it.</p>
+
+  <section class="card" id="result" hidden>
+    <p class="status" id="status"></p>
+    <p id="detail"></p>
+    <p class="what" id="what"></p>
+    <div class="row"><button class="quiet" id="closeBtn" type="button">Close tab</button></div>
+  </section>
+
+  <form class="card" id="manual" hidden>
+    <label for="mUrl">Link</label>
+    <input id="mUrl" type="url" required placeholder="https://…">
+    <label for="mTitle">Title (optional)</label>
+    <input id="mTitle" type="text" placeholder="Shown in KOReader's list">
+    <button type="submit">Send</button>
+  </form>
+
+  <form class="card" id="setup" hidden>
+    <p class="status">One-time setup on this device</p>
+    <p class="help">Paste a GitHub fine-grained token that can only write <b>Contents</b> on this one repo. It's stored in this browser only.</p>
+    <label for="tok">GitHub token</label>
+    <input id="tok" type="password" autocomplete="off" required placeholder="github_pat_…">
+    <button type="submit">Save token</button>
+  </form>
+
+  <p class="help" id="foot"></p>
+</main>
+
+<script>
+(function(){
+  const $ = (id) => document.getElementById(id);
+  // Repo is inferred from the GitHub Pages address: <owner>.github.io/<repo>/send.html
+  const OWNER = location.hostname.split('.')[0];
+  const REPO = location.pathname.split('/').filter(Boolean)[0] || 'kobo-feed';
+  const FEED_PATH = 'feed.xml';
+  const TOKEN_KEY = 'kobofeed.token';
+  const MAX_ITEMS = 60;
+  const PINNED = ['https://www.yudkowsky.net/rational/virtues', 'https://www.cs.virginia.edu/~robins/YouAndYourResearch.html'];
+
+  const getToken = () => { try { return localStorage.getItem(TOKEN_KEY) || ''; } catch(e) { return ''; } };
+  const setToken = (t) => { try { localStorage.setItem(TOKEN_KEY, t); } catch(e) {} };
+
+  const params = new URLSearchParams(location.search);
+  let pending = { url: params.get('url') || '', title: params.get('title') || '', note: params.get('note') || '' };
+  // Share sheets sometimes put the link inside "text" instead of "url".
+  if (!pending.url && params.get('text')) { const m = params.get('text').match(/https?:\/\/\S+/); if (m) pending.url = m[0]; }
+
+  $('foot').innerHTML = 'Feed: <a href="https://raw.githubusercontent.com/' + OWNER + '/' + REPO + '/main/' + FEED_PATH + '">' + OWNER + '/' + REPO + '/' + FEED_PATH + '</a> · <a href="#" id="forget">Forget token on this device</a>';
+  $('forget').addEventListener('click', (e) => { e.preventDefault(); try { localStorage.removeItem(TOKEN_KEY); } catch(_) {} show('setup'); });
+  $('closeBtn').addEventListener('click', () => { window.close(); });
+
+  function show(which){ for (const id of ['result','manual','setup']) $(id).hidden = id !== which; }
+  function report(kind, head, detail, what){
+    show('result');
+    $('status').className = 'status ' + (kind || '');
+    $('status').textContent = head; $('detail').textContent = detail || ''; $('what').textContent = what || '';
+  }
+
+  function koboFriendly(u){
+    let m = u.match(/^https?:\/\/(www\.)?(lesswrong\.com|alignmentforum\.org)\/(posts\/.*)$/);
+    if (m) return 'https://www.greaterwrong.com/' + m[3];
+    m = u.match(/^https?:\/\/arxiv\.org\/(abs|pdf)\/(\d{4}\.\d{4,5})(v\d+)?/);
+    if (m) return 'https://arxiv.org/html/' + m[2];
+    return u;
+  }
+  const b64decode = (s) => new TextDecoder().decode(Uint8Array.from(atob(s.replace(/\n/g,'')), c => c.charCodeAt(0)));
+  const b64encode = (s) => { const bytes = new TextEncoder().encode(s); let bin = ''; for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(bin); };
+
+  async function gh(method, path, token, body){
+    const r = await fetch('https://api.github.com/repos/' + OWNER + '/' + REPO + '/contents/' + path, {
+      method, headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28', ...(body ? {'Content-Type':'application/json'} : {}) },
+      body: body ? JSON.stringify(body) : undefined, cache: 'no-store'
+    });
+    const data = await r.json().catch(() => ({}));
+    return { status: r.status, data };
+  }
+
+  function addItem(xmlText, item){
+    const doc = new DOMParser().parseFromString(xmlText, 'application/xml');
+    if (doc.getElementsByTagName('parsererror').length) throw new Error('feed.xml is not valid XML');
+    const channel = doc.getElementsByTagName('channel')[0];
+    const items = [...channel.getElementsByTagName('item')];
+    const linkOf = (it) => (it.getElementsByTagName('link')[0] || {}).textContent;
+    if (items.some(it => linkOf(it) === item.link)) return { xml: null, duplicate: true };
+    const mk = (tag, text, attrs) => { const n = doc.createElement(tag); n.textContent = text; for (const [k,v] of Object.entries(attrs || {})) n.setAttribute(k, v); return n; };
+    const node = doc.createElement('item');
+    node.append('\n', mk('title', item.title), '\n', mk('link', item.link), '\n', mk('guid', item.link, {isPermaLink:'true'}), '\n', mk('pubDate', new Date().toUTCString()), '\n', mk('description', item.note || 'Sent from ' + (item.from || 'the web')), '\n');
+    channel.insertBefore(node, items[0] || null);
+    channel.insertBefore(doc.createTextNode('\n'), items[0] || null);
+    // Trim oldest, but never the pinned items (keeps the feed at two or more entries).
+    const all = [...channel.getElementsByTagName('item')];
+    let extra = all.length - MAX_ITEMS;
+    for (let i = all.length - 1; i >= 0 && extra > 0; i--) { if (!PINNED.includes(linkOf(all[i]))) { all[i].remove(); extra--; } }
+    const lb = channel.getElementsByTagName('lastBuildDate')[0];
+    if (lb) lb.textContent = new Date().toUTCString();
+    let out = new XMLSerializer().serializeToString(doc);
+    if (!out.startsWith('<?xml')) out = '<?xml version="1.0" encoding="UTF-8"?>\n' + out;
+    return { xml: out, duplicate: false };
+  }
+
+  async function send(){
+    const token = getToken();
+    if (!token) { show('setup'); return; }
+    let url;
+    try { url = new URL(pending.url).href; } catch(e) { report('bad', 'That isn’t a valid link.', 'Paste the full address, starting with https://', pending.url); return; }
+    const link = koboFriendly(url);
+    const item = { title: (pending.title || '').trim() || link, link, note: pending.note, from: new URL(url).hostname };
+    report('', 'Sending…', '', item.title);
+    for (let attempt = 0; attempt < 3; attempt++){
+      const got = await gh('GET', FEED_PATH, token);
+      if (got.status === 401) { report('bad', 'GitHub rejected the token.', 'It may have expired. Tap "Forget token on this device" and paste a new one.'); return; }
+      if (got.status === 404) { report('bad', 'Couldn’t find ' + OWNER + '/' + REPO + '/' + FEED_PATH + '.', 'Check that the token has access to this repo and that feed.xml exists.'); return; }
+      if (got.status !== 200) { report('bad', 'GitHub returned an error (' + got.status + ').', got.data.message || 'Try again in a moment.'); return; }
+      let res;
+      try { res = addItem(b64decode(got.data.content), item); } catch(e) { report('bad', 'The feed file is damaged.', e.message); return; }
+      if (res.duplicate) { report('ok', 'Already on your feed.', 'It’s been sent before. Sync KOReader if you don’t see it.', item.title); return; }
+      const put = await gh('PUT', FEED_PATH, token, { message: 'Send to Kobo: ' + item.title.slice(0, 72), content: b64encode(res.xml), sha: got.data.sha });
+      if (put.status === 200 || put.status === 201) {
+        report('ok', 'Added to your Kobo feed.', 'Sync KOReader’s news downloader in about 5 minutes (GitHub caches the feed briefly).', item.title);
+        return;
+      }
+      if (put.status !== 409 && put.status !== 422) { report('bad', 'Couldn’t save the feed (' + put.status + ').', put.data.message || 'Try again in a moment.'); return; }
+      // 409/422 = the file changed underneath us (e.g. two sends at once): re-read and retry.
+    }
+    report('bad', 'The feed kept changing while saving.', 'Try again in a moment.');
+  }
+
+  $('setup').addEventListener('submit', (e) => { e.preventDefault(); const t = $('tok').value.trim(); if (!t) return; setToken(t); $('tok').value = ''; pending.url ? send() : show('manual'); });
+  $('manual').addEventListener('submit', (e) => { e.preventDefault(); pending = { url: $('mUrl').value.trim(), title: $('mTitle').value.trim(), note: '' }; send(); });
+
+  if (!getToken()) show('setup');
+  else if (pending.url) send();
+  else show('manual');
+})();
+</script>
+</body>
+</html>

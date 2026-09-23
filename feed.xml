@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+<channel>
+<title>Low Noise: To Read</title>
+<link>https://claude.ai/artifact/5v2H1mSXF712tzV6kdVmGb</link>
+<description>Articles sent from Low Noise to Kobo.</description>
+<lastBuildDate>Wed, 23 Sep 2026 00:07:02 +0000</lastBuildDate>
+<item>
+<title>Twelve Virtues of Rationality (pinned)</title>
+<link>https://www.yudkowsky.net/rational/virtues</link>
+<guid isPermaLink="true">https://www.yudkowsky.net/rational/virtues</guid>
+<pubDate>Tue, 22 Sep 2026 00:00:01 +0000</pubDate>
+<description>Eliezer Yudkowsky, 2006 · Pinned so this feed never has fewer than two entries.</description>
+</item>
+<item>
+<title>You and Your Research (pinned)</title>
+<link>https://www.cs.virginia.edu/~robins/YouAndYourResearch.html</link>
+<guid isPermaLink="true">https://www.cs.virginia.edu/~robins/YouAndYourResearch.html</guid>
+<pubDate>Tue, 22 Sep 2026 00:00:00 +0000</pubDate>
+<description>Richard Hamming, 1986 · Pinned so this feed never has fewer than two entries.</description>
+</item>
+</channel>
+</rss>
