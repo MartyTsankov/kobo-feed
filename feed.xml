@@ -1,9 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?><rss version="2.0">
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
 <channel>
 <title>Low Noise: To Read</title>
 <link>https://claude.ai/artifact/5v2H1mSXF712tzV6kdVmGb</link>
 <description>Articles sent from Low Noise to Kobo.</description>
-<lastBuildDate>Wed, 23 Sep 2026 00:23:00 GMT</lastBuildDate>
+<lastBuildDate>Wed, 23 Sep 2026 00:33:19 GMT</lastBuildDate>
+<item>
+<title>Politics and the English Language</title>
+<link>https://www.orwellfoundation.com/the-orwell-foundation/orwell/essays-and-other-works/politics-and-the-english-language/</link>
+<guid isPermaLink="true">https://www.orwellfoundation.com/the-orwell-foundation/orwell/essays-and-other-works/politics-and-the-english-language/</guid>
+<pubDate>Wed, 23 Sep 2026 00:33:19 GMT</pubDate>
+<description>George Orwell · Why now: the government is renaming 'artificial intelligence' to 'super intelligence' on official documents, and every side of the AI debate is fighting over words ('pace', 'pause', 'hoax'). This is the essay on how political language works, and a model of plain prose. The six rules at the end are worth keeping.</description>
+</item>
 <item>
 <title>We Must Pace the Frontier</title>
 <link>https://darioamodei.com/post/we-must-pace-the-frontier</link>
