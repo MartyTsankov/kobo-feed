@@ -1,10 +1,16 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0">
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0">
 <channel>
 <title>Low Noise: To Read</title>
 <link>https://claude.ai/artifact/5v2H1mSXF712tzV6kdVmGb</link>
 <description>Articles sent from Low Noise to Kobo.</description>
-<lastBuildDate>Tue, 29 Sep 2026 16:32:45 GMT</lastBuildDate>
+<lastBuildDate>Fri, 02 Oct 2026 13:35:25 GMT</lastBuildDate>
+<item>
+<title>Vallentin: why he became a mathematician, and why he still would</title>
+<link>https://proofsandprompts.com/2026/10/02/why-i-became-a-professional-mathematician/</link>
+<guid isPermaLink="true">https://proofsandprompts.com/2026/10/02/why-i-became-a-professional-mathematician/</guid>
+<pubDate>Fri, 02 Oct 2026 13:35:25 GMT</pubDate>
+<description>Proofs and Prompts · Frank Vallentin, a professor at the University of Cologne, traces his path from teenage programming to mathematics. He sees superhuman AI provers as the fulfillment of his teenage dream of automating mathematics, not a threat. He thinks the field's next level is proof exploration (asking which proofs are elegant and robust, and mapping 'the space of proofs') rather than proof </description>
+</item>
 <item>
 <title>Evidence about risk should be transparent</title>
 <link>https://www.greaterwrong.com/posts/LawgAaGTvbbnZi7u2/evidence-about-risk-should-be-transparent</link>
