@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/terms/" xmlns:opds="http://opds-spec.org/2010/catalog">
+<id>urn:kobo-feed:MartyTsankov/kobo-feed:pdfs</id>
+<title>Low Noise PDFs</title>
+<updated>2026-10-02T14:46:24Z</updated>
+<author><name>kobo-feed</name></author>
+<link rel="self" href="https://raw.githubusercontent.com/MartyTsankov/kobo-feed/main/opds.xml" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
+<link rel="start" href="https://raw.githubusercontent.com/MartyTsankov/kobo-feed/main/opds.xml" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
+<entry>
+<title>On Proof and Progress in Mathematics</title>
+<id>urn:kobo-feed:d510947ae6a33095</id>
+<updated>2026-10-02T14:46:24Z</updated>
+<summary>William P. Thurston · Why now: Harlev&#x27;s argument today, that AI-proven results without human understanding shouldn&#x27;t earn credit, is Thurston&#x27;s argument from thirty years ago. Thurston wrote that mathematicians aren&#x27;t after proofs as such but after human understanding, and he described what happened to his foliation-theory subfield when results outran understanding. It is the standard reference wh</summary>
+<link rel="http://opds-spec.org/acquisition" href="https://raw.githubusercontent.com/MartyTsankov/kobo-feed/main/pdfs/d510947ae6a33095.pdf" type="application/pdf"/>
+</entry>
+</feed>
