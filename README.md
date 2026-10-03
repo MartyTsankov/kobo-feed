@@ -27,6 +27,8 @@ A personal reading feed for KOReader. Anything sent with **Send to Kobo** (from 
    - Name: `Low Noise PDFs`
    - URL: `https://raw.githubusercontent.com/USERNAME/kobo-feed/main/opds.xml`
    Then, in the OPDS menu's settings, choose a **Sync folder** (e.g. `Low Noise PDFs`), set **File types to sync** to `pdf`, and turn on sync for this catalog. *Sync all* downloads any new PDFs. You can also open the catalog and tap one PDF to download just that one.
+   - **Sync** only includes catalogs whose *Sync catalog* box is checked (long-press the catalog → Edit).
+   - **"Up to date!" but nothing downloaded?** KOReader remembers the newest catalog entry after every sync, even one that downloaded nothing (for example, before a sync folder or file type was set). Long-press the catalog and choose **Force sync** once to reset this.
 
 ## Sending from anywhere
 
@@ -54,4 +56,5 @@ javascript:window.open('https://USERNAME.github.io/kobo-feed/send.html?url='+enc
 - The repo's **Actions** tab logs `OK`, `PDF`, `PARTIAL` or `FAILED` for each link.
 - If an Action run fails with a 403 on `git push`, go to Settings → Actions → General → Workflow permissions and choose "Read and write permissions".
 - LessWrong and Alignment Forum links are swapped for their GreaterWrong mirror, which renders better on e-ink.
+- Footnotes work inside the book: the Action keeps each article's own footnote links and writes in-page links so KOReader doesn't turn them into web links. Tap a footnote number to see the note.
 - The feed, the catalog and the PDFs are public: anyone with the URL can see them. The token only lives in your own browsers. If a device is lost, revoke the token on GitHub.

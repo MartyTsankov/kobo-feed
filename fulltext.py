@@ -35,13 +35,15 @@ from html import escape
 import pymupdf
 import requests
 import trafilatura
+from lxml import html as lxml_html
+from urllib.parse import urljoin
 
 INBOX = "feed.xml"
 OUT = "kobo.xml"
 OPDS = "opds.xml"
 CACHE = "articles"
 PDF_DIR = "pdfs"
-CACHE_VERSION = 3        # bump to re-process everything once
+CACHE_VERSION = 4        # bump to re-process everything once
 MIN_WORDS = 600          # below this, a web page counts as an excerpt, not the piece
 MAX_TRIES = 2            # runs to try a link that failed for a lasting reason (404, no text)
 MAX_RETRIES = 8          # runs to retry a link that failed for a temporary reason (network, 429, 5xx)
@@ -92,12 +94,115 @@ def body_only(html: str) -> str:
 
 
 def html_to_article(text: str, url: str):
+    """Reader-mode extraction. trafilatura finds the article; then we take the page's own
+    markup for that article (keeping footnotes and in-page links), falling back to
+    trafilatura's simplified HTML if that doesn't work out."""
     out = trafilatura.extract(
         text, url=url, output_format="html", include_formatting=True,
         include_links=True, include_tables=True, include_images=False,
         include_comments=False, favor_recall=True,
     )
-    return body_only(out) if out else None
+    if not out:
+        return None
+    simple = body_only(out)
+    try:
+        original = original_markup(text, url, simple)
+    except Exception as e:  # never let the nicer path break extraction
+        print(f"  (keeping simplified text: {type(e).__name__}: {e})")
+        original = None
+    return original or simple
+
+
+DROP_TAGS = ("script", "style", "noscript", "iframe", "svg", "canvas", "form", "button", "input",
+             "select", "textarea", "nav", "img", "picture", "source", "video", "audio", "object", "embed", "template")
+KEEP_ATTRS = {"href", "id", "colspan", "rowspan", "start", "type", "value"}
+BLOCK_TAGS = ("p", "li", "blockquote", "h1", "h2", "h3", "h4", "h5", "h6", "pre", "td", "dd")
+
+
+def _find(root, tags):
+    return root.xpath(" | ".join(f".//{t}" for t in tags))
+
+
+def _norm(t: str) -> str:
+    return re.sub(r"\s+", " ", t or "").strip().lower()
+
+
+def original_markup(page: str, url: str, simple: str):
+    """Find the element in the original page that holds the article trafilatura found,
+    and return it cleaned, with footnotes and in-page links intact."""
+    # 1. Fingerprints of the article's paragraphs, from trafilatura's output.
+    ref = lxml_html.fromstring(f"<div>{simple}</div>")
+    keys = {_norm(e.text_content())[:60] for e in _find(ref, BLOCK_TAGS) if len(_norm(e.text_content())) >= 40}
+    if len(keys) < 4:
+        return None
+    doc = lxml_html.fromstring(page)
+    for bad in _find(doc, DROP_TAGS):
+        bad.drop_tree()
+    # 2. Blocks in the page that match those paragraphs, and their lowest common container.
+    hits = [e for e in _find(doc, BLOCK_TAGS) if _norm(e.text_content())[:60] in keys]
+    if len(hits) < 0.6 * len(keys):
+        return None
+    counts = {}
+    for h in hits:
+        for anc in h.iterancestors():
+            counts[anc] = counts.get(anc, 0) + 1
+    need = 0.9 * len(hits)
+    candidates = [a for a, n in counts.items() if n >= need and a.tag not in ("html", "body")]
+    if not candidates:
+        return None
+    box = max(candidates, key=lambda a: sum(1 for _ in a.iterancestors()))  # deepest = tightest
+    # 3. Footnote targets the article links to but that sit outside the container: bring them along.
+    inner_ids = {e.get("id") for e in box.iter() if e.get("id")}
+    wanted = {a.get("href")[1:] for a in box.iter("a") if (a.get("href") or "").startswith("#") and len(a.get("href")) > 1}
+    outside = [doc.get_element_by_id(i, None) for i in wanted - inner_ids]
+    outside = [o for o in outside if o is not None and box not in o.iterancestors() and o not in box.iterancestors()]
+    extra = []
+    if outside:
+        common = outside[0]
+        for o in outside[1:]:
+            while common is not None and common is not o and common not in o.iterancestors():
+                common = common.getparent()
+        if common is not None and common.tag not in ("html", "body") and box not in common.iterancestors():
+            extra = [common]
+        else:
+            extra = outside
+    # 4. Clean a copy: keep structure, drop presentation attributes, fix links.
+    wrapper = lxml_html.fromstring("<div></div>")
+    wrapper.append(_clone(box))
+    if extra:
+        hr = lxml_html.fromstring("<hr/>")
+        wrapper.append(hr)
+        for x in extra:
+            wrapper.append(_clone(x))
+    ids = {e.get("id") for e in wrapper.iter() if e.get("id")}
+    for e in wrapper.iter():
+        if not isinstance(e.tag, str):
+            continue
+        for k in list(e.attrib):
+            if k not in KEEP_ATTRS:
+                del e.attrib[k]
+        if e.tag == "a":
+            href = (e.get("href") or "").strip()
+            if href.startswith("#"):
+                if href[1:] not in ids:
+                    e.attrib.pop("href", None)        # in-page link to nothing: keep the text only
+            elif href.lower().startswith(("javascript:", "data:")) or not href:
+                e.attrib.pop("href", None)
+            else:
+                e.set("href", urljoin(url, href))
+    out = lxml_html.tostring(wrapper, encoding="unicode", method="html")
+    # 5. Sanity check: about the same amount of text as trafilatura found, not the whole page.
+    w_new, w_old = count_words(out), count_words(simple)
+    if w_new < 0.85 * w_old or w_new > 2.5 * w_old + 200:
+        return None
+    # KOReader prefixes every href="..." in a feed article with the article's URL, which turns
+    # in-page links (footnotes) into external links. It only matches double quotes, so write
+    # in-page links with single quotes to keep them working inside the book.
+    return re.sub(r'href="(#[^"]*)"', r"href='\1'", out)
+
+
+def _clone(el):
+    return lxml_html.fromstring(lxml_html.tostring(el, encoding="unicode"))
 
 
 class Transient(str):
@@ -275,6 +380,8 @@ def main():
         due = (c.get("status") not in ("ok", "pdf", "partial")
                and c.get("tries", 0) < limit and now - c.get("last", 0) > RETRY_AFTER)
         if due:
+            if changed:
+                time.sleep(2)  # be gentle with sites when re-processing many links at once
             res = process(i, link)
             for k in ("html", "words", "reason", "file", "pages", "bytes", "title"):
                 c.pop(k, None)
