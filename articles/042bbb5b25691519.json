@@ -1,1 +1,1 @@
-{"v": 3, "link": "https://proofsandprompts.com/2026/10/02/why-i-became-a-professional-mathematician/", "tries": 1, "status": "failed", "reason": "https://proofsandprompts.com/2026/10/02/why-i-became-a-professional-mathematician/ answered HTTP 429", "last": 1791043815.7679513, "checked": "2026-10-03T16:10:16+00:00"}
+{"v": 3, "link": "https://proofsandprompts.com/2026/10/02/why-i-became-a-professional-mathematician/", "tries": 2, "status": "retrying", "last": 1791045513.4569657, "checked": "2026-10-03T16:38:59+00:00", "reason": "the site answered HTTP 429 (too many requests)"}
