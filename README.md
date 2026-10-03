@@ -50,6 +50,7 @@ javascript:window.open('https://USERNAME.github.io/kobo-feed/send.html?url='+enc
 - After you send something, the send page waits for the Action and tells you what happened: **full text**, **saved as a PDF**, only an **excerpt**, or **no text**.
 - In the news feed, anything that isn't full article text is labeled in its title: **[PDF]** (sync the PDF catalog to get it), **[Excerpt]** (only a short piece came through, e.g. an abstract page) or **[Link only]** (nothing could be fetched).
 - arXiv links always become the real PDF, including old IDs like `math/9404236`.
+- Temporary problems (a site that's down or slow, or "too many requests") are retried automatically: a few times within the same run, then every hour for about eight hours. Those items show up on the Kobo once they come through, so a link you've sent is never lost. If GreaterWrong can't be reached, the Action falls back to the original LessWrong page.
 - The repo's **Actions** tab logs `OK`, `PDF`, `PARTIAL` or `FAILED` for each link.
 - If an Action run fails with a 403 on `git push`, go to Settings → Actions → General → Workflow permissions and choose "Read and write permissions".
 - LessWrong and Alignment Forum links are swapped for their GreaterWrong mirror, which renders better on e-ink.

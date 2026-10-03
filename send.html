@@ -144,6 +144,7 @@ button.quiet{background:transparent;color:var(--muted);border:1px solid var(--ru
     if (c.status === 'ok') return ['ok', 'Full text is ready (' + n + ' words).', 'Sync KOReader\u2019s news downloader in about 5 minutes. GitHub caches the feed briefly.'];
     if (c.status === 'pdf') return ['ok', 'Saved as a PDF (' + (c.pages || '?') + ' pages).', 'In KOReader, sync the \u201cLow Noise PDFs\u201d OPDS catalog in about 5 minutes to download it.'];
     if (c.status === 'partial') return ['bad', 'Only an excerpt came through (' + n + ' words).', 'It will show on the Kobo as “[Excerpt]”. It’s probably an abstract or summary, so read the full piece at the link instead.'];
+    if (c.status === 'retrying') return ['', 'The site couldn\u2019t be reached just now.', 'That\u2019s usually temporary (' + (c.reason || 'network error') + '). It\u2019s safely queued and retries automatically every hour. It appears on your Kobo once it comes through, so there\u2019s nothing more to do.'];
     if (c.status === 'failed') return ['bad', 'No readable text could be fetched.', 'It will show on the Kobo as “[Link only]”. Reason: ' + (c.reason || 'unknown') + '.'];
     return null;
   }

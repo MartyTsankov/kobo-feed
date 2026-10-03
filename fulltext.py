@@ -43,8 +43,10 @@ CACHE = "articles"
 PDF_DIR = "pdfs"
 CACHE_VERSION = 3        # bump to re-process everything once
 MIN_WORDS = 600          # below this, a web page counts as an excerpt, not the piece
-MAX_TRIES = 3            # give up on a failing link after this many runs
-RETRY_AFTER = 30 * 60    # seconds between retries of a failed link
+MAX_TRIES = 2            # runs to try a link that failed for a lasting reason (404, no text)
+MAX_RETRIES = 8          # runs to retry a link that failed for a temporary reason (network, 429, 5xx)
+RETRY_AFTER = 20 * 60    # seconds between retries (the workflow also runs hourly)
+TRANSIENT_HTTP = {408, 425, 429, 500, 502, 503, 504, 520, 522, 524}
 MAX_CHARS = 600_000      # keep the feed a sane size
 MAX_PDF_BYTES = 60 * 1024 * 1024
 
@@ -98,14 +100,32 @@ def html_to_article(text: str, url: str):
     return body_only(out) if out else None
 
 
+class Transient(str):
+    """An error message for a failure that is likely temporary (worth retrying later)."""
+
+
 def fetch(url):
-    try:
-        r = requests.get(url, headers=HEADERS, timeout=90, allow_redirects=True)
-    except requests.RequestException as e:
-        return None, f"couldn't reach {url} ({type(e).__name__})"
-    if r.status_code >= 400:
-        return None, f"{url} answered HTTP {r.status_code}"
-    return r, None
+    """GET with up to 3 attempts for temporary failures. Returns (response, None) or (None, error).
+    The error is a Transient when retrying later may succeed."""
+    waits = [5, 20]
+    for attempt in range(3):
+        try:
+            r = requests.get(url, headers=HEADERS, timeout=60, allow_redirects=True)
+        except requests.RequestException as e:
+            err = Transient(f"couldn't reach the site ({type(e).__name__})")
+        else:
+            if r.status_code < 400:
+                return r, None
+            if r.status_code not in TRANSIENT_HTTP:
+                return None, f"the site answered HTTP {r.status_code}"
+            err = Transient(f"the site answered HTTP {r.status_code}"
+                            + (" (too many requests)" if r.status_code == 429 else ""))
+            ra = r.headers.get("retry-after", "")
+            if ra.isdigit() and int(ra) <= 60 and attempt < 2:
+                waits[attempt] = max(waits[attempt], int(ra))
+        if attempt < 2:
+            time.sleep(waits[attempt])
+    return None, err
 
 
 def is_pdf(r) -> bool:
@@ -127,12 +147,24 @@ def save_pdf(i: str, data: bytes):
     return {"file": path, "pages": pages, "bytes": len(data)}, None
 
 
+def fail(err) -> dict:
+    return {"status": "retrying" if isinstance(err, Transient) else "failed", "reason": str(err)}
+
+
+def alternates(link: str):
+    """Other addresses for the same piece, tried if the first one can't be reached."""
+    m = re.match(r"https?://(?:www\.)?greaterwrong\.com/(posts/.*)", link)
+    if m:
+        return ["https://www.lesswrong.com/" + m.group(1)]
+    return []
+
+
 def process(i: str, link: str) -> dict:
     m = ARXIV.match(link)
     if m:  # arXiv: always the real PDF (math survives, any age of paper)
         r, err = fetch(f"https://arxiv.org/pdf/{m.group(1)}")
         if err:
-            return {"status": "failed", "reason": err}
+            return fail(err)
         if not is_pdf(r):
             return {"status": "failed", "reason": "arXiv didn't return a PDF"}
         saved, err = save_pdf(i, r.content)
@@ -140,9 +172,14 @@ def process(i: str, link: str) -> dict:
             return {"status": "failed", "reason": err}
         return {"status": "pdf", **saved, "title": arxiv_title(m.group(1)) or pdf_title(r.content)}
 
-    r, err = fetch(link)
+    r, err, used = None, None, link
+    for url in [link] + alternates(link):
+        r, err = fetch(url)
+        if not err:
+            used = url
+            break
     if err:
-        return {"status": "failed", "reason": err}
+        return fail(err)
     if is_pdf(r):
         saved, err = save_pdf(i, r.content)
         if not saved:
@@ -150,8 +187,8 @@ def process(i: str, link: str) -> dict:
         return {"status": "pdf", **saved, "title": pdf_title(r.content)}
 
     r.encoding = r.encoding or r.apparent_encoding
-    title = page_title(r.text, link)
-    html = html_to_article(r.text, link)
+    title = page_title(r.text, used)
+    html = html_to_article(r.text, used)
     w = count_words(html)
     if w >= MIN_WORDS:
         return {"status": "ok", "html": html[:MAX_CHARS], "words": w, "title": title}
@@ -234,14 +271,17 @@ def main():
         c = load_cache(i) or {}
         if c.get("v") != CACHE_VERSION:
             c = {"v": CACHE_VERSION, "link": link, "tries": 0}
+        limit = MAX_RETRIES if c.get("status") in (None, "retrying") else MAX_TRIES
         due = (c.get("status") not in ("ok", "pdf", "partial")
-               and c.get("tries", 0) < MAX_TRIES and now - c.get("last", 0) > RETRY_AFTER)
+               and c.get("tries", 0) < limit and now - c.get("last", 0) > RETRY_AFTER)
         if due:
             res = process(i, link)
             for k in ("html", "words", "reason", "file", "pages", "bytes", "title"):
                 c.pop(k, None)
             c.update(res, tries=c.get("tries", 0) + 1, last=now,
                      checked=datetime.now(timezone.utc).isoformat(timespec="seconds"))
+            if c["status"] == "retrying" and c["tries"] >= MAX_RETRIES:
+                c["status"] = "failed"
             detail = (f"{c.get('pages')} pages" if c["status"] == "pdf" else f"{c.get('words', 0)} words")
             print(f"{c['status'].upper():8} {detail:>12}  {link}" + (f"  ({c['reason']})" if c.get("reason") else ""))
             save_cache(i, c)
@@ -250,6 +290,8 @@ def main():
         if needs_title(title, link) and c.get("title"):
             title = c["title"]
         status = c.get("status", "pending")
+        if status in ("pending", "retrying"):
+            continue  # appears on the Kobo once it's resolved
         source_line = f'<p><small>Source: <a href="{escape(link)}">{escape(link)}</a></small></p>'
         if status == "ok":
             shown, content = title, c["html"]
