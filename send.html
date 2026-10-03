@@ -31,7 +31,7 @@ button.quiet{background:transparent;color:var(--muted);border:1px solid var(--ru
 <body>
 <main>
   <h1>Send to Kobo</h1>
-  <p class="sub">Adds a link to your KOReader feed. Sync KOReader in a few minutes to get it.</p>
+  <p class="sub">Adds a link to your KOReader feed. Articles arrive as text and PDFs as real PDFs. Sync KOReader a few minutes later.</p>
 
   <section class="card" id="result" hidden>
     <p class="status" id="status"></p>
@@ -92,8 +92,9 @@ button.quiet{background:transparent;color:var(--muted);border:1px solid var(--ru
   function koboFriendly(u){
     let m = u.match(/^https?:\/\/(www\.)?(lesswrong\.com|alignmentforum\.org)\/(posts\/.*)$/);
     if (m) return 'https://www.greaterwrong.com/' + m[3];
-    m = u.match(/^https?:\/\/arxiv\.org\/(abs|pdf)\/(\d{4}\.\d{4,5})(v\d+)?/);
-    if (m) return 'https://arxiv.org/html/' + m[2];
+    // arXiv: point at the abstract page; the Action fetches the PDF from it.
+    m = u.match(/^https?:\/\/(?:www\.|export\.)?arxiv\.org\/(?:abs|pdf|html)\/((?:[a-z\-]+(?:\.[A-Z]{2})?\/\d{7})|(?:\d{4}\.\d{4,5}))/i);
+    if (m) return 'https://arxiv.org/abs/' + m[1];
     return u;
   }
   const b64decode = (s) => new TextDecoder().decode(Uint8Array.from(atob(s.replace(/\n/g,'')), c => c.charCodeAt(0)));
@@ -131,6 +132,40 @@ button.quiet{background:transparent;color:var(--muted);border:1px solid var(--ru
     return { xml: out, duplicate: false };
   }
 
+  // After a send, the GitHub Action fetches the article and records the result in
+  // articles/<first 16 hex chars of sha1(link)>.json. Poll it so you know whether the
+  // Kobo will get the full text, an excerpt, or only a link.
+  async function sha1hex(s){
+    const buf = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(s));
+    return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+  function textVerdict(c){
+    const n = (c.words || 0).toLocaleString();
+    if (c.status === 'ok') return ['ok', 'Full text is ready (' + n + ' words).', 'Sync KOReader\u2019s news downloader in about 5 minutes. GitHub caches the feed briefly.'];
+    if (c.status === 'pdf') return ['ok', 'Saved as a PDF (' + (c.pages || '?') + ' pages).', 'In KOReader, sync the \u201cLow Noise PDFs\u201d OPDS catalog in about 5 minutes to download it.'];
+    if (c.status === 'partial') return ['bad', 'Only an excerpt came through (' + n + ' words).', 'It will show on the Kobo as “[Excerpt]”. It’s probably an abstract or summary, so read the full piece at the link instead.'];
+    if (c.status === 'failed') return ['bad', 'No readable text could be fetched.', 'It will show on the Kobo as “[Link only]”. Reason: ' + (c.reason || 'unknown') + '.'];
+    return null;
+  }
+  async function watchText(token, item, isDuplicate){
+    const id = (await sha1hex(item.link)).slice(0, 16);
+    const deadline = Date.now() + 4 * 60 * 1000;
+    let first = true;
+    while (Date.now() < deadline){
+      if (!first) await new Promise(r => setTimeout(r, 6000));
+      first = false;
+      let got;
+      try { got = await gh('GET', 'articles/' + id + '.json', token); } catch(e) { continue; }
+      if (got.status !== 200) continue;          // not written yet
+      let c; try { c = JSON.parse(b64decode(got.data.content)); } catch(e) { continue; }
+      if (c.v !== 3) continue;                   // old-format entry; the Action will redo it
+      const v = textVerdict(c);
+      if (v) { report(v[0], v[1], v[2], item.title); return; }
+    }
+    report('', isDuplicate ? 'On your feed, but its text hasn’t been checked yet.' : 'Added, but the text is still being fetched.',
+      'Open the repo’s Actions tab to see progress, or open this link again in a few minutes to check.', item.title);
+  }
+
   async function send(){
     const token = getToken();
     if (!token) { show('setup'); return; }
@@ -146,10 +181,11 @@ button.quiet{background:transparent;color:var(--muted);border:1px solid var(--ru
       if (got.status !== 200) { report('bad', 'GitHub returned an error (' + got.status + ').', got.data.message || 'Try again in a moment.'); return; }
       let res;
       try { res = addItem(b64decode(got.data.content), item); } catch(e) { report('bad', 'The feed file is damaged.', e.message); return; }
-      if (res.duplicate) { report('ok', 'Already on your feed.', 'It’s been sent before. Sync KOReader if you don’t see it.', item.title); return; }
+      if (res.duplicate) { report('ok', 'Already on your feed.', 'It’s been sent before. Checking whether its text came through…', item.title); await watchText(token, item, true); return; }
       const put = await gh('PUT', FEED_PATH, token, { message: 'Send to Kobo: ' + item.title.slice(0, 72), content: b64encode(res.xml), sha: got.data.sha });
       if (put.status === 200 || put.status === 201) {
-        report('ok', 'Added to your Kobo feed.', 'Sync KOReader’s news downloader in about 5 minutes (GitHub caches the feed briefly).', item.title);
+        report('ok', 'Added to your Kobo feed.', 'Fetching the article text now. This usually takes about a minute…', item.title);
+        await watchText(token, item, false);
         return;
       }
       if (put.status !== 409 && put.status !== 422) { report('bad', 'Couldn’t save the feed (' + put.status + ').', put.data.message || 'Try again in a moment.'); return; }

@@ -1,17 +1,25 @@
 #!/usr/bin/env python3
-"""Turn feed.xml (links only) into kobo.xml (links + full article text).
+"""Turn feed.xml (links only) into what KOReader reads.
 
 Runs in GitHub Actions after every send. The send page only ever edits
-feed.xml; this script only writes kobo.xml and articles/, so the two never
-fight over the same file.
+feed.xml; this script only writes kobo.xml, opds.xml, articles/ and pdfs/,
+so the two never fight over the same file.
 
 For each item in feed.xml:
-  - fetch the page from GitHub's servers with a normal browser identity,
-  - pull out the article body (reader-mode style) with trafilatura,
-  - cache it in articles/<id>.json so each link is fetched only once,
-  - write it into kobo.xml as <content:encoded><![CDATA[ ... ]]>.
-KOReader (with "Download full article" OFF) reads that text directly, so the
-Kobo never has to contact the article's website.
+  - Web pages: fetch from GitHub's servers with a normal browser identity and
+    pull out the article body (reader-mode style). The text goes into kobo.xml
+    (the RSS feed for KOReader's news downloader).
+  - PDFs and arXiv papers: download the actual PDF into pdfs/ and list it in
+    opds.xml (an OPDS catalog that KOReader syncs into a folder), so you read
+    the real PDF with its layout and math intact.
+  - Each result is judged and cached in articles/<id>.json:
+      ok       full article text
+      pdf      saved as a PDF
+      partial  only a short excerpt came through (e.g. an abstract page)
+      failed   nothing usable
+    On the Kobo, items that aren't full text say so in their title:
+    [PDF], [Excerpt] or [Link only]. The send page reads the cache to tell
+    you right after sending.
 """
 import hashlib
 import json
@@ -21,23 +29,37 @@ import sys
 import time
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
-from email.utils import format_datetime
+from email.utils import format_datetime, parsedate_to_datetime
 from html import escape
 
+import pymupdf
 import requests
 import trafilatura
 
 INBOX = "feed.xml"
 OUT = "kobo.xml"
+OPDS = "opds.xml"
 CACHE = "articles"
-MAX_TRIES = 3            # give up on a link after this many failed runs
+PDF_DIR = "pdfs"
+CACHE_VERSION = 3        # bump to re-process everything once
+MIN_WORDS = 600          # below this, a web page counts as an excerpt, not the piece
+MAX_TRIES = 3            # give up on a failing link after this many runs
 RETRY_AFTER = 30 * 60    # seconds between retries of a failed link
-MAX_CHARS = 400_000      # keep the feed a sane size
+MAX_CHARS = 600_000      # keep the feed a sane size
+MAX_PDF_BYTES = 60 * 1024 * 1024
+
+REPO = os.environ.get("GITHUB_REPOSITORY", "MartyTsankov/kobo-feed")
+RAW_BASE = f"https://raw.githubusercontent.com/{REPO}/main"
 
 UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/128.0 Safari/537.36")
-HEADERS = {"User-Agent": UA, "Accept": "text/html,application/xhtml+xml,*/*;q=0.8",
+HEADERS = {"User-Agent": UA, "Accept": "text/html,application/xhtml+xml,application/pdf,*/*;q=0.8",
            "Accept-Language": "en-US,en;q=0.9"}
+
+# New-style (2301.01234) and old-style (math/9404236, hep-th/9711200) arXiv ids.
+ARXIV = re.compile(
+    r"https?://(?:www\.|export\.)?arxiv\.org/(?:abs|pdf|html)/"
+    r"((?:[a-z\-]+(?:\.[A-Z]{2})?/\d{7})|(?:\d{4}\.\d{4,5}))(?:v\d+)?", re.I)
 
 
 def item_id(link: str) -> str:
@@ -58,35 +80,128 @@ def save_cache(i, data):
         json.dump(data, f, ensure_ascii=False)
 
 
+def count_words(html: str) -> int:
+    return len(re.sub(r"<[^>]+>", " ", html or "").split())
+
+
 def body_only(html: str) -> str:
     m = re.search(r"<body[^>]*>(.*)</body>", html, re.S | re.I)
     return (m.group(1) if m else html).strip()
 
 
-def extract(link: str):
-    """Return (html, None) on success or (None, reason) on failure."""
-    try:
-        r = requests.get(link, headers=HEADERS, timeout=40, allow_redirects=True)
-    except requests.RequestException as e:
-        return None, f"couldn't reach the site ({type(e).__name__})"
-    if r.status_code >= 400:
-        return None, f"the site answered HTTP {r.status_code}"
-    ctype = r.headers.get("content-type", "")
-    if "pdf" in ctype:
-        return None, "the link is a PDF, which can't be turned into feed text"
-    r.encoding = r.encoding or r.apparent_encoding
+def html_to_article(text: str, url: str):
     out = trafilatura.extract(
-        r.text, url=link, output_format="html", include_formatting=True,
+        text, url=url, output_format="html", include_formatting=True,
         include_links=True, include_tables=True, include_images=False,
         include_comments=False, favor_recall=True,
     )
-    if not out or len(re.sub(r"<[^>]+>", "", out).strip()) < 400:
-        return None, "no readable article text found (the page may need JavaScript)"
-    return body_only(out)[:MAX_CHARS], None
+    return body_only(out) if out else None
+
+
+def fetch(url):
+    try:
+        r = requests.get(url, headers=HEADERS, timeout=90, allow_redirects=True)
+    except requests.RequestException as e:
+        return None, f"couldn't reach {url} ({type(e).__name__})"
+    if r.status_code >= 400:
+        return None, f"{url} answered HTTP {r.status_code}"
+    return r, None
+
+
+def is_pdf(r) -> bool:
+    return "pdf" in r.headers.get("content-type", "").lower() or r.content[:5] == b"%PDF-"
+
+
+def save_pdf(i: str, data: bytes):
+    """Validate and store a PDF. Returns (fields, None) or (None, reason)."""
+    if len(data) > MAX_PDF_BYTES:
+        return None, f"the PDF is too large ({len(data) // (1024 * 1024)} MB)"
+    try:
+        pages = pymupdf.open(stream=data, filetype="pdf").page_count
+    except Exception:
+        return None, "the PDF couldn't be opened"
+    os.makedirs(PDF_DIR, exist_ok=True)
+    path = f"{PDF_DIR}/{i}.pdf"
+    with open(path, "wb") as f:
+        f.write(data)
+    return {"file": path, "pages": pages, "bytes": len(data)}, None
+
+
+def process(i: str, link: str) -> dict:
+    m = ARXIV.match(link)
+    if m:  # arXiv: always the real PDF (math survives, any age of paper)
+        r, err = fetch(f"https://arxiv.org/pdf/{m.group(1)}")
+        if err:
+            return {"status": "failed", "reason": err}
+        if not is_pdf(r):
+            return {"status": "failed", "reason": "arXiv didn't return a PDF"}
+        saved, err = save_pdf(i, r.content)
+        if not saved:
+            return {"status": "failed", "reason": err}
+        return {"status": "pdf", **saved, "title": arxiv_title(m.group(1)) or pdf_title(r.content)}
+
+    r, err = fetch(link)
+    if err:
+        return {"status": "failed", "reason": err}
+    if is_pdf(r):
+        saved, err = save_pdf(i, r.content)
+        if not saved:
+            return {"status": "failed", "reason": err}
+        return {"status": "pdf", **saved, "title": pdf_title(r.content)}
+
+    r.encoding = r.encoding or r.apparent_encoding
+    title = page_title(r.text, link)
+    html = html_to_article(r.text, link)
+    w = count_words(html)
+    if w >= MIN_WORDS:
+        return {"status": "ok", "html": html[:MAX_CHARS], "words": w, "title": title}
+    if w > 0:
+        return {"status": "partial", "html": html[:MAX_CHARS], "words": w, "title": title,
+                "reason": f"only {w} words came through, probably an abstract or summary rather than the full piece"}
+    return {"status": "failed", "title": title, "reason": "no readable text found (the page may need JavaScript)"}
+
+
+def needs_title(title: str, link: str) -> bool:
+    t = (title or "").strip()
+    return not t or t == link or t.startswith(("http://", "https://"))
+
+
+def page_title(html_text: str, url: str):
+    try:
+        meta = trafilatura.extract_metadata(html_text, default_url=url)
+        if meta and meta.title:
+            return meta.title.strip()
+    except Exception:
+        pass
+    m = re.search(r"<title[^>]*>(.*?)</title>", html_text or "", re.S | re.I)
+    return re.sub(r"\s+", " ", m.group(1)).strip() if m else None
+
+
+def pdf_title(data: bytes):
+    try:
+        t = (pymupdf.open(stream=data, filetype="pdf").metadata or {}).get("title") or ""
+        return t.strip() or None
+    except Exception:
+        return None
+
+
+def arxiv_title(aid: str):
+    r, err = fetch(f"https://arxiv.org/abs/{aid}")
+    if err:
+        return None
+    m = re.search(r'<meta name="citation_title" content="([^"]+)"', r.text)
+    return m.group(1).strip() if m else page_title(r.text, f"https://arxiv.org/abs/{aid}")
 
 
 def cdata(s: str) -> str:
     return "<![CDATA[" + s.replace("]]>", "]]]]><![CDATA[>") + "]]>"
+
+
+def iso(pub: str) -> str:
+    try:
+        return parsedate_to_datetime(pub).astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    except Exception:
+        return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def main():
@@ -94,17 +209,19 @@ def main():
     channel = tree.getroot().find("channel")
     items = channel.findall("item")
     now = time.time()
-    changed_cache = False
+    changed = False
+    feed_title = channel.findtext("title", "Low Noise: To Read")
 
-    parts = [
+    rss = [
         '<?xml version="1.0" encoding="UTF-8"?>',
         '<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">',
         "<channel>",
-        f"<title>{escape(channel.findtext('title', 'Low Noise: To Read'))}</title>",
+        f"<title>{escape(feed_title)}</title>",
         f"<link>{escape(channel.findtext('link', ''))}</link>",
         "<description>Full-text feed for KOReader, built from feed.xml.</description>",
         f"<lastBuildDate>{format_datetime(datetime.now(timezone.utc))}</lastBuildDate>",
     ]
+    pdf_entries, keep_pdfs = [], set()
 
     for it in items:
         link = (it.findtext("link") or "").strip()
@@ -114,50 +231,103 @@ def main():
         if not link:
             continue
         i = item_id(link)
-        c = load_cache(i) or {"link": link, "tries": 0}
-        if c.get("status") != "ok" and c.get("tries", 0) < MAX_TRIES and now - c.get("last", 0) > RETRY_AFTER:
-            html, why = extract(link)
-            c["tries"] = c.get("tries", 0) + 1
-            c["last"] = now
-            if html:
-                c.update(status="ok", html=html)
-                print(f"ok     {link}")
-            else:
-                c.update(status="failed", reason=why)
-                print(f"FAILED {link}: {why}")
+        c = load_cache(i) or {}
+        if c.get("v") != CACHE_VERSION:
+            c = {"v": CACHE_VERSION, "link": link, "tries": 0}
+        due = (c.get("status") not in ("ok", "pdf", "partial")
+               and c.get("tries", 0) < MAX_TRIES and now - c.get("last", 0) > RETRY_AFTER)
+        if due:
+            res = process(i, link)
+            for k in ("html", "words", "reason", "file", "pages", "bytes", "title"):
+                c.pop(k, None)
+            c.update(res, tries=c.get("tries", 0) + 1, last=now,
+                     checked=datetime.now(timezone.utc).isoformat(timespec="seconds"))
+            detail = (f"{c.get('pages')} pages" if c["status"] == "pdf" else f"{c.get('words', 0)} words")
+            print(f"{c['status'].upper():8} {detail:>12}  {link}" + (f"  ({c['reason']})" if c.get("reason") else ""))
             save_cache(i, c)
-            changed_cache = True
+            changed = True
 
-        if c.get("status") == "ok":
-            content = c["html"]
-        else:
-            reason = c.get("reason", "it hasn't been fetched yet")
-            content = (f"<p><em>The full text couldn't be added automatically: {escape(reason)}.</em></p>"
-                       f"<p>{escape(desc)}</p><p>Read it at: <a href=\"{escape(link)}\">{escape(link)}</a></p>")
+        if needs_title(title, link) and c.get("title"):
+            title = c["title"]
+        status = c.get("status", "pending")
         source_line = f'<p><small>Source: <a href="{escape(link)}">{escape(link)}</a></small></p>'
-
-        parts += [
+        if status == "ok":
+            shown, content = title, c["html"]
+        elif status == "pdf":
+            keep_pdfs.add(c["file"])
+            pdf_entries.append((iso(pub), i, title, desc, c))
+            shown = "[PDF] " + title
+            content = (f"<p><strong>This one is a PDF ({c.get('pages', '?')} pages).</strong> "
+                       "Get it from the <em>Low Noise PDFs</em> OPDS catalog: in KOReader's file browser, "
+                       "tap the search icon, choose OPDS catalog, and sync.</p>"
+                       f"<p>{escape(desc)}</p>")
+        elif status == "partial":
+            shown = "[Excerpt] " + title
+            content = (f"<p><strong>Only an excerpt came through ({c.get('words', 0)} words).</strong> "
+                       "This is probably an abstract or summary, not the full piece. "
+                       f"Read it at: <a href=\"{escape(link)}\">{escape(link)}</a></p><hr/>" + c["html"])
+        else:
+            shown = "[Link only] " + title
+            reason = c.get("reason", "it hasn't been fetched yet")
+            content = (f"<p><strong>The text couldn't be added:</strong> {escape(reason)}.</p>"
+                       f"<p>{escape(desc)}</p><p>Read it at: <a href=\"{escape(link)}\">{escape(link)}</a></p>")
+        body = cdata(content + source_line)
+        rss += [
             "<item>",
-            f"<title>{escape(title)}</title>",
+            f"<title>{escape(shown)}</title>",
             f"<link>{escape(link)}</link>",
             f'<guid isPermaLink="true">{escape(link)}</guid>',
             f"<pubDate>{escape(pub)}</pubDate>",
-            f"<description>{escape(desc)}</description>",
-            f"<content:encoded>{cdata(content + source_line)}</content:encoded>",
+            # Full text in BOTH fields: some KOReader versions read only <description>.
+            f"<description>{body}</description>",
+            f"<content:encoded>{body}</content:encoded>",
             "</item>",
         ]
+    rss += ["</channel>", "</rss>", ""]
 
-    parts += ["</channel>", "</rss>", ""]
-    new = "\n".join(parts)
-    old = open(OUT).read() if os.path.exists(OUT) else ""
-    # Ignore lastBuildDate when deciding whether anything changed.
+    # OPDS acquisition catalog, newest first (KOReader's sync requires that order).
+    pdf_entries.sort(key=lambda e: e[0], reverse=True)
+    newest = pdf_entries[0][0] if pdf_entries else "2026-01-01T00:00:00Z"
+    kind = "application/atom+xml;profile=opds-catalog;kind=acquisition"
+    opds = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/terms/" '
+        'xmlns:opds="http://opds-spec.org/2010/catalog">',
+        f"<id>urn:kobo-feed:{escape(REPO)}:pdfs</id>",
+        "<title>Low Noise PDFs</title>",
+        f"<updated>{newest}</updated>",
+        "<author><name>kobo-feed</name></author>",
+        f'<link rel="self" href="{RAW_BASE}/{OPDS}" type="{kind}"/>',
+        f'<link rel="start" href="{RAW_BASE}/{OPDS}" type="{kind}"/>',
+    ]
+    for when, i, title, desc, c in pdf_entries:
+        opds += [
+            "<entry>",
+            f"<title>{escape(title)}</title>",
+            f"<id>urn:kobo-feed:{i}</id>",
+            f"<updated>{when}</updated>",
+            f"<summary>{escape(desc)}</summary>",
+            f'<link rel="http://opds-spec.org/acquisition" href="{RAW_BASE}/{c["file"]}" type="application/pdf"/>',
+            "</entry>",
+        ]
+    opds += ["</feed>", ""]
+
+    # Remove PDFs whose items have left feed.xml (the send page keeps the newest 60).
+    os.makedirs(PDF_DIR, exist_ok=True)
+    open(os.path.join(PDF_DIR, ".gitkeep"), "a").close()
+    for name in os.listdir(PDF_DIR):
+        path = f"{PDF_DIR}/{name}"
+        if name.endswith(".pdf") and path not in keep_pdfs:
+            os.remove(path)
+            changed = True
+
     strip = lambda s: re.sub(r"<lastBuildDate>.*?</lastBuildDate>", "", s)
-    if strip(new) != strip(old) or changed_cache:
-        with open(OUT, "w") as f:
-            f.write(new)
-        print(f"wrote {OUT} with {len(items)} items")
-    else:
-        print("no changes")
+    for path, text, cmp in ((OUT, "\n".join(rss), strip), (OPDS, "\n".join(opds), lambda s: s)):
+        old = open(path).read() if os.path.exists(path) else ""
+        if cmp(text) != cmp(old) or changed:
+            with open(path, "w") as f:
+                f.write(text)
+    print(f"{len(items)} items; {len(pdf_entries)} PDFs in the catalog")
 
 
 if __name__ == "__main__":
