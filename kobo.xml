@@ -4,7 +4,235 @@
 <title>Low Noise: To Read</title>
 <link>https://claude.ai/artifact/5v2H1mSXF712tzV6kdVmGb</link>
 <description>Full-text feed for KOReader, built from feed.xml.</description>
-<lastBuildDate>Sat, 03 Oct 2026 20:57:41 +0000</lastBuildDate>
+<lastBuildDate>Tue, 06 Oct 2026 18:38:23 +0000</lastBuildDate>
+<item>
+<title>The Future of Mathematics</title>
+<link>https://terrytao.wordpress.com/2026/10/05/the-future-of-mathematics/</link>
+<guid isPermaLink="true">https://terrytao.wordpress.com/2026/10/05/the-future-of-mathematics/</guid>
+<pubDate>Tue, 06 Oct 2026 18:38:09 GMT</pubDate>
+<description><![CDATA[<div><div>
+		
+<p>
+ <em>[This is a guest post by <a href="https://www.andrew.cmu.edu/user/avigad/">Jeremy Avigad</a>. This blog post was initially written in a different file format and converted using AI. — T.]</em>
+</p><p>
+“Mathematics underwent, in the nineteenth century, a transformation so profound that it is not too much to call it a second birth of the subject—its first birth having occurred among the ancient Greeks…”
+</p><p>
+Howard Stein, in “Logos, Logic, and Logistiké: Some Philosophical Remarks on Nineteenth-Century Transformation of Mathematics”
+</p><p>
+“The report of my death was an exaggeration.”
+</p><p>
+Mark Twain
+</p><p>
+“May you live in interesting times.”
+</p><p>
+(traditional)
+</p><p>
+I recently attended a meeting of innovative science and technology startups supported by Convergent Research, the organization that oversees the Lean FRO, a nonprofit that develops the Lean theorem prover. The meeting was designed to stimulate discussion, and when I introduced myself as a mathematician, many participants were eager to talk about the impact of recent events in AI on mathematics and reactions in the mathematics community. They were surprised to hear that I find the tone of the community responses on blogs like this one and <a href="https://proofsandprompts.com/">Proofs and Prompts</a> generally positive and encouraging, even though we all recognize that fundamental aspects of our day-to-day professional lives are bound to change. These discussions have helped me shape some of the thoughts I would like to share here.
+</p><p>
+There is a narrow view of what mathematicians do, encapsulated in our daily workflows: we try to solve problems, and when the hard problems are too hard to solve, we make up easier approximations, solve them, and then vary the parameters. That practice has been disrupted by the events of the last few months, in the sense that the kinds of results that would have, a year ago, made for perfectly respectable publications can now easily be generated with the help of AI. This has left us worrying about what it will mean to do mathematics going forward, as well as how to train and support the next generation of mathematicians to do whatever that is.
+</p><p>
+The history of mathematics offers us a broader view. What has remained stable, despite centuries of changes, is that mathematics is a culture of rigorous reasoning and communication, providing us with language and abstractions that let us think and communicate more reliably and efficiently. Surely such reasoning is still important, even in the age of AI. The fact that many of us find mathematics aesthetically pleasing doesn’t diminish its practical utility, but rather is explained by it: I expect that the reason that doing mathematics feels so good is that it is the exercise of capacities that are so fundamental to our survival as a species that they are wired into our DNA. If that’s right, mathematical thought isn’t going away any time soon.
+</p><p>
+The challenge is that solving the kinds of problems we have been solving for decades becomes decoupled from the goal of enhancing our mathematical understanding when we let AI do the work. The question, therefore, isn’t whether we still need mathematics, but rather how to pursue mathematical understanding in the age of AI. I will provide three general answers.
+</p><p>
+<span id="more-18353"></span>
+</p><p>
+<b>Solve harder problems</b>
+</p><p>
+There are two salient features of today’s foundation models: first, they have seen the entire mathematical literature, and second, they are tireless; a swarm of agents can make its way to a solution by trying countless variations. This explains why the AI-generated solutions to open problems we have seen all have a similar character: they are problems that AI could solve by cobbling together available techniques. (I am grateful to Matthew Ballard for this characterization, and the subsequent analysis.)
+</p><p>
+Can every interesting mathematical question be answered that way? Probably not, and even questions that can may have more interesting and satisfying solutions that invoke novel ideas and insights. Perhaps, in the near future, AI systems will be able to come up with such insights, but, at the very least, let’s recognize that we are not there yet. Reinforcement-learning training regimes have systems chain conventional moves and learn, from a history of failures and successes, which ones are most promising in a given state. The fact that the value of an action is graded solely in terms of the success of a final trajectory breeds superhuman cleverness but may miss creativity and higher-level strategizing. In any case, there are still hard questions to be solved and ambitious research programs to pursue, and the possibility of making progress on them with the help of AI is exciting.
+</p><p>
+<b>Think bigger thoughts</b>
+</p><p>
+Our present situation would be much more depressing if mathematics were a matter of ticking off problems imposed on us by aliens, an endless sequence of exercises and exams. The good news is that when we do mathematics, we get to choose the problems, grade the solutions, and favor the ones we like best. We decide what’s interesting to us, what questions to pursue, and why. Our destiny is in our hands.
+</p><p>
+The things we admire most in mathematics often seem to come out of nowhere. In 1853, the young Bernhard Riemann submitted three potential topics to his advisor, Carl Friedrich Gauss, to choose from for his Habilitationsvortrag, a lecture he was required to give to secure a teaching position at the University of Göttingen. Gauss reportedly chose the topic for which Riemann was least prepared, to see what he would make of it. The resulting lecture, “On the Hypotheses Which Lie at the Foundations of Geometry,” was published posthumously in 1868, and it revolutionized the field. The lecture distinguished a space’s metric properties from its topological properties and introduced the general notion of a manifold, though the latter did not receive a fully rigorous treatment until the twentieth century. The focus on intrinsic properties of a space—in Riemannian geometry, those determined by the metric and independent of embedding in a larger space—was key to Einstein’s theory of general relativity decades later. Riemannian geometry has had applications that Riemann himself could never have imagined, from robotics and medical imaging to statistical analysis.
+</p><p>
+William Ewald’s excellent sourcebook, <a href="https://global.oup.com/academic/product/from-kant-to-hilbert-volume-2-9780198505365?cc=us&amp;lang=en">From Kant to Hilbert</a>, provides a lovely introduction to the paper and quotes Felix Klein’s description of the work:
+</p><p>
+“The publication of [Riemann’s lecture] occurred just at the time when I was beginning to occupy myself independently with mathematical problems. So I still have vivid memories of the extraordinary impact Riemann’s train of thought made on the young mathematicians of the day. Much seemed to us dark and difficult to understand, and yet of unfathomable depth, where the modern mathematician, who has already absorbed all these things into his mode of thought from the outset, only admires the clarity and fecundity of the exposition.”
+</p><p>
+What seemed dark and mysterious to the young Klein is now part of the canon, something that foundation models have absorbed and internalized through their training, just as young mathematicians do. I am grateful to Ballard once again for suggesting this example and pointing out that no reinforcement-learning setup could have evaluated Riemann’s decisions: the benefits are diffuse and hard to track, and the time horizon is much too long.
+</p><p>
+The same can be said for countless mathematical developments that have opened up new vistas, such as Galois’ focus on groups of permutations in the study of solvability of algebraic equations, Poincaré’s qualitative studies of dynamical systems, or Grothendieck’s far-reaching conceptual innovations. Will AI eventually be able to make advances like these? That’s not even the right question to ask. Telling us that some AI agent is spinning out theorems that are highly interesting to it and other AI agents does nothing for us. We should care about AI only insofar as the results are interesting and important to us, and, at the end of the day, it’s up to us to decide what that means. The values we assign to mathematical developments are embedded in our history and culture.
+</p><p>
+Imagine planning a trip to go backpacking in the Alaskan wilderness for exercise and recreation. You might be happy to let AI help book your flight, but not to let AI take the hike for you and send you pictures. In mathematics, what is at stake isn’t our recreation but agency over our reasoning and deliberation. Whether or not AI can think, it can’t think for us. We have our own lives to live; mathematics is our story to tell, and it’s up to us to decide how to tell it. With AI, there’s even more to explore, and no shortage of avenues for discovery.
+</p><p>
+<b>Try new things</b>
+</p><p>
+So far, I have focused on using AI to help us do the things we used to do, but let’s not forget that the technologies themselves raise new questions, and that we have a lot to learn about how to use them effectively. I have argued in <a href="https://arxiv.org/abs/2608.23218">another essay</a> (now scheduled to appear in the <em>Notices of the AMS</em>) that mathematicians should be actively involved in understanding how the technologies work and in coming up with novel and creative ways to use them to do new mathematics.
+</p><p>
+AI changing what it means to do mathematics is not without precedent. The use of algebraic methods to solve geometric problems in the seventeenth century was a new technology, and not everyone liked it; yet we mastered the new techniques and learned how to use them to great effect. The same is true of infinitesimals later in that century, algebraic structures in the nineteenth century, set-theoretic abstraction and structural language in the early twentieth century, and numerical and symbolic computation more recently. These were all alien and disconcerting when they were new. We should view those who invest time and energy in getting proof assistants and neural networks to help us discover new mathematics as doing mathematics proper, rather than dismissing them as mere technicians. In the age of AI, developing symbolic automation or training a neural network can be no less a contribution to mathematics than manually chaining inferences to prove a theorem.
+</p><p>
+I have heard arguments that as the job market contracts, we should turn inward to preserve traditional mathematical skills. On the contrary, I believe that engaging with new technologies and learning how to use them to improve our ability to reason and discover new mathematics will keep the discipline strong. Expanding our view of mathematics is the best way to expand the profession and keep it relevant.
+</p><p>
+<b>Our message to the next generation</b>
+</p><p>
+My rosy outlook on the future and glib advice to solve harder problems, think bigger thoughts, and try new things will not provide much comfort to students and early-career researchers, who feel the ground shifting beneath their feet. My words are not meant to diminish the challenges ahead or suggest easy responses to the disruption. Mathematics departments, community leaders, educators, professional societies, and journal boards are holding emergency meetings all over, and are doing their best to make concrete recommendations and take appropriate action. We have our work cut out for us.
+</p><p>
+Despite the uncertainty, there are some clear messages we can send to the next generation of mathematicians. The first is that we stand with you. There is nothing more important to us than the health and strength of the discipline, and ensuring that you can thrive. We have the humility to recognize that our experience and expertise are limited, and that some of the things we thought we knew in the past are no longer valid. We are committed to working with you as best we can to preserve the profession and keep it strong.
+</p><p>
+Second, mathematics is as important today as it ever was, and we need you. AI must not replace our collective ability to reason and deliberate, and mathematics remains a core capacity for doing so. We cannot imagine a world in which mathematics does not play an important part in our lives.
+</p><p>
+Finally, the next few years will be extremely interesting. We are at a new frontier, where our communal norms, values, and expectations are beginning to break down, and it’s up to all of us to figure out what should replace them. I am confident that future historians will see this moment as the start of a new era of mathematics, and that they will weigh the consequences of our actions and decisions. Mathematics has never been for the faint of heart; this is our opportunity to rise to the occasion and face the challenges together.
+</p><p>
+</p><div id="jp-post-flair"><div><div><h3>Share this:</h3><div><ul><li><a href="https://terrytao.wordpress.com/2026/10/05/the-future-of-mathematics/#print?share=print">
+				<span id="sharing-print-18353">Print (Opens in new window)</span>
+				<span>Print</span>
+			</a></li><li><a href="mailto:?subject=%5BShared%20Post%5D%20The%20Future%20of%20Mathematics&amp;body=https%3A%2F%2Fterrytao.wordpress.com%2F2026%2F10%2F05%2Fthe-future-of-mathematics%2F&amp;share=email">
+				<span id="sharing-email-18353">Email a link to a friend (Opens in new window)</span>
+				<span>Email</span>
+			</a></li><li><a><span>More</span></a></li><li></ul><div><div><ul><li><a href="https://terrytao.wordpress.com/2026/10/05/the-future-of-mathematics/?share=jetpack-whatsapp">
+				<span id="sharing-whatsapp-18353">Share on WhatsApp (Opens in new window)</span>
+				<span>WhatsApp</span>
+			</a></li><li><a href="https://terrytao.wordpress.com/2026/10/05/the-future-of-mathematics/?share=bluesky">
+				<span id="sharing-bluesky-18353">Share on Bluesky (Opens in new window)</span>
+				<span>Bluesky</span>
+			</a></li><li><a href="https://terrytao.wordpress.com/2026/10/05/the-future-of-mathematics/?share=nextdoor">
+				<span id="sharing-nextdoor-18353">Share on Nextdoor (Opens in new window)</span>
+				<span>Nextdoor</span>
+			</a></li><li><a href="https://terrytao.wordpress.com/2026/10/05/the-future-of-mathematics/?share=threads">
+				<span id="sharing-threads-18353">Share on Threads (Opens in new window)</span>
+				<span>Threads</span>
+			</a></li><li><a href="https://terrytao.wordpress.com/2026/10/05/the-future-of-mathematics/?share=tumblr">
+				<span id="sharing-tumblr-18353">Share on Tumblr (Opens in new window)</span>
+				<span>Tumblr</span>
+			</a></li><li><a href="https://terrytao.wordpress.com/2026/10/05/the-future-of-mathematics/?share=telegram">
+				<span id="sharing-telegram-18353">Share on Telegram (Opens in new window)</span>
+				<span>Telegram</span>
+			</a></li><li><a href="https://terrytao.wordpress.com/2026/10/05/the-future-of-mathematics/?share=linkedin">
+				<span id="sharing-linkedin-18353">Share on LinkedIn (Opens in new window)</span>
+				<span>LinkedIn</span>
+			</a></li><li><a href="https://terrytao.wordpress.com/2026/10/05/the-future-of-mathematics/?share=x">
+				<span id="sharing-x-18353">Share on X (Opens in new window)</span>
+				<span>X</span>
+			</a></li><li><a href="https://terrytao.wordpress.com/2026/10/05/the-future-of-mathematics/?share=facebook">
+				<span id="sharing-facebook-18353">Share on Facebook (Opens in new window)</span>
+				<span>Facebook</span>
+			</a></li><li><a href="https://terrytao.wordpress.com/2026/10/05/the-future-of-mathematics/?share=reddit">
+				<span id="sharing-reddit-18353">Share on Reddit (Opens in new window)</span>
+				<span>Reddit</span>
+			</a></li><li><a href="https://terrytao.wordpress.com/2026/10/05/the-future-of-mathematics/?share=mastodon">
+				<span id="sharing-mastodon-18353">Share on Mastodon (Opens in new window)</span>
+				<span>Mastodon</span>
+			</a></li><li><a href="https://terrytao.wordpress.com/2026/10/05/the-future-of-mathematics/?share=pinterest">
+				<span id="sharing-pinterest-18353">Share on Pinterest (Opens in new window)</span>
+				<span>Pinterest</span>
+			</a></li><li></ul></div></div></div></div></div><div id="like-post-wrapper-817149-18353-6ac53d9b834f4"><div><span><span>Like</span></span> <span>Loading...</span></div><span></span><a></a></div></div>	</div>
+		</div><p><small>Source: <a href="https://terrytao.wordpress.com/2026/10/05/the-future-of-mathematics/">https://terrytao.wordpress.com/2026/10/05/the-future-of-mathematics/</a></small></p>]]></description>
+<content:encoded><![CDATA[<div><div>
+		
+<p>
+ <em>[This is a guest post by <a href="https://www.andrew.cmu.edu/user/avigad/">Jeremy Avigad</a>. This blog post was initially written in a different file format and converted using AI. — T.]</em>
+</p><p>
+“Mathematics underwent, in the nineteenth century, a transformation so profound that it is not too much to call it a second birth of the subject—its first birth having occurred among the ancient Greeks…”
+</p><p>
+Howard Stein, in “Logos, Logic, and Logistiké: Some Philosophical Remarks on Nineteenth-Century Transformation of Mathematics”
+</p><p>
+“The report of my death was an exaggeration.”
+</p><p>
+Mark Twain
+</p><p>
+“May you live in interesting times.”
+</p><p>
+(traditional)
+</p><p>
+I recently attended a meeting of innovative science and technology startups supported by Convergent Research, the organization that oversees the Lean FRO, a nonprofit that develops the Lean theorem prover. The meeting was designed to stimulate discussion, and when I introduced myself as a mathematician, many participants were eager to talk about the impact of recent events in AI on mathematics and reactions in the mathematics community. They were surprised to hear that I find the tone of the community responses on blogs like this one and <a href="https://proofsandprompts.com/">Proofs and Prompts</a> generally positive and encouraging, even though we all recognize that fundamental aspects of our day-to-day professional lives are bound to change. These discussions have helped me shape some of the thoughts I would like to share here.
+</p><p>
+There is a narrow view of what mathematicians do, encapsulated in our daily workflows: we try to solve problems, and when the hard problems are too hard to solve, we make up easier approximations, solve them, and then vary the parameters. That practice has been disrupted by the events of the last few months, in the sense that the kinds of results that would have, a year ago, made for perfectly respectable publications can now easily be generated with the help of AI. This has left us worrying about what it will mean to do mathematics going forward, as well as how to train and support the next generation of mathematicians to do whatever that is.
+</p><p>
+The history of mathematics offers us a broader view. What has remained stable, despite centuries of changes, is that mathematics is a culture of rigorous reasoning and communication, providing us with language and abstractions that let us think and communicate more reliably and efficiently. Surely such reasoning is still important, even in the age of AI. The fact that many of us find mathematics aesthetically pleasing doesn’t diminish its practical utility, but rather is explained by it: I expect that the reason that doing mathematics feels so good is that it is the exercise of capacities that are so fundamental to our survival as a species that they are wired into our DNA. If that’s right, mathematical thought isn’t going away any time soon.
+</p><p>
+The challenge is that solving the kinds of problems we have been solving for decades becomes decoupled from the goal of enhancing our mathematical understanding when we let AI do the work. The question, therefore, isn’t whether we still need mathematics, but rather how to pursue mathematical understanding in the age of AI. I will provide three general answers.
+</p><p>
+<span id="more-18353"></span>
+</p><p>
+<b>Solve harder problems</b>
+</p><p>
+There are two salient features of today’s foundation models: first, they have seen the entire mathematical literature, and second, they are tireless; a swarm of agents can make its way to a solution by trying countless variations. This explains why the AI-generated solutions to open problems we have seen all have a similar character: they are problems that AI could solve by cobbling together available techniques. (I am grateful to Matthew Ballard for this characterization, and the subsequent analysis.)
+</p><p>
+Can every interesting mathematical question be answered that way? Probably not, and even questions that can may have more interesting and satisfying solutions that invoke novel ideas and insights. Perhaps, in the near future, AI systems will be able to come up with such insights, but, at the very least, let’s recognize that we are not there yet. Reinforcement-learning training regimes have systems chain conventional moves and learn, from a history of failures and successes, which ones are most promising in a given state. The fact that the value of an action is graded solely in terms of the success of a final trajectory breeds superhuman cleverness but may miss creativity and higher-level strategizing. In any case, there are still hard questions to be solved and ambitious research programs to pursue, and the possibility of making progress on them with the help of AI is exciting.
+</p><p>
+<b>Think bigger thoughts</b>
+</p><p>
+Our present situation would be much more depressing if mathematics were a matter of ticking off problems imposed on us by aliens, an endless sequence of exercises and exams. The good news is that when we do mathematics, we get to choose the problems, grade the solutions, and favor the ones we like best. We decide what’s interesting to us, what questions to pursue, and why. Our destiny is in our hands.
+</p><p>
+The things we admire most in mathematics often seem to come out of nowhere. In 1853, the young Bernhard Riemann submitted three potential topics to his advisor, Carl Friedrich Gauss, to choose from for his Habilitationsvortrag, a lecture he was required to give to secure a teaching position at the University of Göttingen. Gauss reportedly chose the topic for which Riemann was least prepared, to see what he would make of it. The resulting lecture, “On the Hypotheses Which Lie at the Foundations of Geometry,” was published posthumously in 1868, and it revolutionized the field. The lecture distinguished a space’s metric properties from its topological properties and introduced the general notion of a manifold, though the latter did not receive a fully rigorous treatment until the twentieth century. The focus on intrinsic properties of a space—in Riemannian geometry, those determined by the metric and independent of embedding in a larger space—was key to Einstein’s theory of general relativity decades later. Riemannian geometry has had applications that Riemann himself could never have imagined, from robotics and medical imaging to statistical analysis.
+</p><p>
+William Ewald’s excellent sourcebook, <a href="https://global.oup.com/academic/product/from-kant-to-hilbert-volume-2-9780198505365?cc=us&amp;lang=en">From Kant to Hilbert</a>, provides a lovely introduction to the paper and quotes Felix Klein’s description of the work:
+</p><p>
+“The publication of [Riemann’s lecture] occurred just at the time when I was beginning to occupy myself independently with mathematical problems. So I still have vivid memories of the extraordinary impact Riemann’s train of thought made on the young mathematicians of the day. Much seemed to us dark and difficult to understand, and yet of unfathomable depth, where the modern mathematician, who has already absorbed all these things into his mode of thought from the outset, only admires the clarity and fecundity of the exposition.”
+</p><p>
+What seemed dark and mysterious to the young Klein is now part of the canon, something that foundation models have absorbed and internalized through their training, just as young mathematicians do. I am grateful to Ballard once again for suggesting this example and pointing out that no reinforcement-learning setup could have evaluated Riemann’s decisions: the benefits are diffuse and hard to track, and the time horizon is much too long.
+</p><p>
+The same can be said for countless mathematical developments that have opened up new vistas, such as Galois’ focus on groups of permutations in the study of solvability of algebraic equations, Poincaré’s qualitative studies of dynamical systems, or Grothendieck’s far-reaching conceptual innovations. Will AI eventually be able to make advances like these? That’s not even the right question to ask. Telling us that some AI agent is spinning out theorems that are highly interesting to it and other AI agents does nothing for us. We should care about AI only insofar as the results are interesting and important to us, and, at the end of the day, it’s up to us to decide what that means. The values we assign to mathematical developments are embedded in our history and culture.
+</p><p>
+Imagine planning a trip to go backpacking in the Alaskan wilderness for exercise and recreation. You might be happy to let AI help book your flight, but not to let AI take the hike for you and send you pictures. In mathematics, what is at stake isn’t our recreation but agency over our reasoning and deliberation. Whether or not AI can think, it can’t think for us. We have our own lives to live; mathematics is our story to tell, and it’s up to us to decide how to tell it. With AI, there’s even more to explore, and no shortage of avenues for discovery.
+</p><p>
+<b>Try new things</b>
+</p><p>
+So far, I have focused on using AI to help us do the things we used to do, but let’s not forget that the technologies themselves raise new questions, and that we have a lot to learn about how to use them effectively. I have argued in <a href="https://arxiv.org/abs/2608.23218">another essay</a> (now scheduled to appear in the <em>Notices of the AMS</em>) that mathematicians should be actively involved in understanding how the technologies work and in coming up with novel and creative ways to use them to do new mathematics.
+</p><p>
+AI changing what it means to do mathematics is not without precedent. The use of algebraic methods to solve geometric problems in the seventeenth century was a new technology, and not everyone liked it; yet we mastered the new techniques and learned how to use them to great effect. The same is true of infinitesimals later in that century, algebraic structures in the nineteenth century, set-theoretic abstraction and structural language in the early twentieth century, and numerical and symbolic computation more recently. These were all alien and disconcerting when they were new. We should view those who invest time and energy in getting proof assistants and neural networks to help us discover new mathematics as doing mathematics proper, rather than dismissing them as mere technicians. In the age of AI, developing symbolic automation or training a neural network can be no less a contribution to mathematics than manually chaining inferences to prove a theorem.
+</p><p>
+I have heard arguments that as the job market contracts, we should turn inward to preserve traditional mathematical skills. On the contrary, I believe that engaging with new technologies and learning how to use them to improve our ability to reason and discover new mathematics will keep the discipline strong. Expanding our view of mathematics is the best way to expand the profession and keep it relevant.
+</p><p>
+<b>Our message to the next generation</b>
+</p><p>
+My rosy outlook on the future and glib advice to solve harder problems, think bigger thoughts, and try new things will not provide much comfort to students and early-career researchers, who feel the ground shifting beneath their feet. My words are not meant to diminish the challenges ahead or suggest easy responses to the disruption. Mathematics departments, community leaders, educators, professional societies, and journal boards are holding emergency meetings all over, and are doing their best to make concrete recommendations and take appropriate action. We have our work cut out for us.
+</p><p>
+Despite the uncertainty, there are some clear messages we can send to the next generation of mathematicians. The first is that we stand with you. There is nothing more important to us than the health and strength of the discipline, and ensuring that you can thrive. We have the humility to recognize that our experience and expertise are limited, and that some of the things we thought we knew in the past are no longer valid. We are committed to working with you as best we can to preserve the profession and keep it strong.
+</p><p>
+Second, mathematics is as important today as it ever was, and we need you. AI must not replace our collective ability to reason and deliberate, and mathematics remains a core capacity for doing so. We cannot imagine a world in which mathematics does not play an important part in our lives.
+</p><p>
+Finally, the next few years will be extremely interesting. We are at a new frontier, where our communal norms, values, and expectations are beginning to break down, and it’s up to all of us to figure out what should replace them. I am confident that future historians will see this moment as the start of a new era of mathematics, and that they will weigh the consequences of our actions and decisions. Mathematics has never been for the faint of heart; this is our opportunity to rise to the occasion and face the challenges together.
+</p><p>
+</p><div id="jp-post-flair"><div><div><h3>Share this:</h3><div><ul><li><a href="https://terrytao.wordpress.com/2026/10/05/the-future-of-mathematics/#print?share=print">
+				<span id="sharing-print-18353">Print (Opens in new window)</span>
+				<span>Print</span>
+			</a></li><li><a href="mailto:?subject=%5BShared%20Post%5D%20The%20Future%20of%20Mathematics&amp;body=https%3A%2F%2Fterrytao.wordpress.com%2F2026%2F10%2F05%2Fthe-future-of-mathematics%2F&amp;share=email">
+				<span id="sharing-email-18353">Email a link to a friend (Opens in new window)</span>
+				<span>Email</span>
+			</a></li><li><a><span>More</span></a></li><li></ul><div><div><ul><li><a href="https://terrytao.wordpress.com/2026/10/05/the-future-of-mathematics/?share=jetpack-whatsapp">
+				<span id="sharing-whatsapp-18353">Share on WhatsApp (Opens in new window)</span>
+				<span>WhatsApp</span>
+			</a></li><li><a href="https://terrytao.wordpress.com/2026/10/05/the-future-of-mathematics/?share=bluesky">
+				<span id="sharing-bluesky-18353">Share on Bluesky (Opens in new window)</span>
+				<span>Bluesky</span>
+			</a></li><li><a href="https://terrytao.wordpress.com/2026/10/05/the-future-of-mathematics/?share=nextdoor">
+				<span id="sharing-nextdoor-18353">Share on Nextdoor (Opens in new window)</span>
+				<span>Nextdoor</span>
+			</a></li><li><a href="https://terrytao.wordpress.com/2026/10/05/the-future-of-mathematics/?share=threads">
+				<span id="sharing-threads-18353">Share on Threads (Opens in new window)</span>
+				<span>Threads</span>
+			</a></li><li><a href="https://terrytao.wordpress.com/2026/10/05/the-future-of-mathematics/?share=tumblr">
+				<span id="sharing-tumblr-18353">Share on Tumblr (Opens in new window)</span>
+				<span>Tumblr</span>
+			</a></li><li><a href="https://terrytao.wordpress.com/2026/10/05/the-future-of-mathematics/?share=telegram">
+				<span id="sharing-telegram-18353">Share on Telegram (Opens in new window)</span>
+				<span>Telegram</span>
+			</a></li><li><a href="https://terrytao.wordpress.com/2026/10/05/the-future-of-mathematics/?share=linkedin">
+				<span id="sharing-linkedin-18353">Share on LinkedIn (Opens in new window)</span>
+				<span>LinkedIn</span>
+			</a></li><li><a href="https://terrytao.wordpress.com/2026/10/05/the-future-of-mathematics/?share=x">
+				<span id="sharing-x-18353">Share on X (Opens in new window)</span>
+				<span>X</span>
+			</a></li><li><a href="https://terrytao.wordpress.com/2026/10/05/the-future-of-mathematics/?share=facebook">
+				<span id="sharing-facebook-18353">Share on Facebook (Opens in new window)</span>
+				<span>Facebook</span>
+			</a></li><li><a href="https://terrytao.wordpress.com/2026/10/05/the-future-of-mathematics/?share=reddit">
+				<span id="sharing-reddit-18353">Share on Reddit (Opens in new window)</span>
+				<span>Reddit</span>
+			</a></li><li><a href="https://terrytao.wordpress.com/2026/10/05/the-future-of-mathematics/?share=mastodon">
+				<span id="sharing-mastodon-18353">Share on Mastodon (Opens in new window)</span>
+				<span>Mastodon</span>
+			</a></li><li><a href="https://terrytao.wordpress.com/2026/10/05/the-future-of-mathematics/?share=pinterest">
+				<span id="sharing-pinterest-18353">Share on Pinterest (Opens in new window)</span>
+				<span>Pinterest</span>
+			</a></li><li></ul></div></div></div></div></div><div id="like-post-wrapper-817149-18353-6ac53d9b834f4"><div><span><span>Like</span></span> <span>Loading...</span></div><span></span><a></a></div></div>	</div>
+		</div><p><small>Source: <a href="https://terrytao.wordpress.com/2026/10/05/the-future-of-mathematics/">https://terrytao.wordpress.com/2026/10/05/the-future-of-mathematics/</a></small></p>]]></content:encoded>
+</item>
 <item>
 <title>How to apply to AI safety fellowships (and beyond)</title>
 <link>https://www.greaterwrong.com/posts/PiP4JqQFKhoqHGG2n/how-to-apply-to-ai-safety-fellowships-and-beyond</link>
